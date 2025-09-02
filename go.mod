@@ -1,4 +1,4 @@
-module outputbuddy
+module github.com/zmunro/outputbuddy
 
 go 1.23.4
 

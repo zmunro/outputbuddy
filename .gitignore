@@ -1,27 +1,40 @@
-# Created by https://www.toptal.com/developers/gitignore/api/go
-# Edit at https://www.toptal.com/developers/gitignore?templates=go
-
-### Go ###
-# If you prefer the allow list template instead of the deny list, see community template:
-# https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
-#
-# Binaries for programs and plugins
+# Binaries
+outputbuddy
+outputbuddy-*
 *.exe
-*.exe~
-*.dll
+
+# Go build artifacts
+*.o
+*.a
 *.so
-*.dylib
 
-# Test binary, built with `go test -c`
-*.test
+# Dependency directories
+vendor/
 
-# Output of the go coverage tool, specifically when used with LiteIDE
-*.out
+# IDE specific files
+.idea/
+*.swp
+*.swo
+*~
+.vscode/
 
-# Dependency directories (remove the comment below to include it)
-# vendor/
+# OS specific files
+.DS_Store
+Thumbs.db
 
-# Go workspace file
-go.work
+# Test outputs
+*.log
+test.log
 
-# End of https://www.toptal.com/developers/gitignore/api/go
+# Release artifacts
+dist/
+
+# Local development
+.env
+.env.local
+
+# Setup guides (optional - remove this section if you want to keep them in the repo)
+# INSTALLATION_SETUP_GUIDE.md
+# GITHUB_RELEASES_SETUP.md
+# HOMEBREW_SETUP.md
+# homebrew-formula.rb

@@ -2,7 +2,7 @@
 
 [![Go Version](https://img.shields.io/badge/Go-1.18+-00ADD8?style=for-the-badge&logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)](LICENSE)
-[![Version](https://img.shields.io/badge/version-2.0.0-green?style=for-the-badge)](https://github.com/yourusername/outputbuddy/releases)
+[![Version](https://img.shields.io/badge/version-2.0.0-green?style=for-the-badge)](https://github.com/zmunro/outputbuddy/releases)
 
 > **Flexible output redirection with color preservation** - Never lose your terminal colors when logging to files again!
 
@@ -23,19 +23,19 @@ outputbuddy (or `ob` for short) is a powerful command-line tool that lets you re
 ### From Source
 
 ```bash
-go install github.com/yourusername/outputbuddy@latest
+go install github.com/zmunro/outputbuddy@latest
 ```
 
 ### Using Homebrew (macOS/Linux)
 
 ```bash
-brew tap yourusername/outputbuddy
+brew tap zmunro/outputbuddy
 brew install outputbuddy
 ```
 
 ### Pre-built Binaries
 
-Download the latest release from the [releases page](https://github.com/yourusername/outputbuddy/releases).
+Download the latest release from the [releases page](https://github.com/zmunro/outputbuddy/releases).
 
 ## 🚀 Quick Start
 
@@ -138,7 +138,7 @@ ob 2+1=all.log 2=errors-only.log 2+1 -- ./app
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/outputbuddy.git
+git clone https://github.com/zmunro/outputbuddy.git
 cd outputbuddy
 
 # Build
@@ -201,7 +201,7 @@ ob 2+1=ci-build.log 2+1 -- make test
 </p>
 
 <p align="center">
-  <a href="https://github.com/yourusername/outputbuddy/issues">Report Bug</a>
+  <a href="https://github.com/zmunro/outputbuddy/issues">Report Bug</a>
   ·
-  <a href="https://github.com/yourusername/outputbuddy/issues">Request Feature</a>
+  <a href="https://github.com/zmunro/outputbuddy/issues">Request Feature</a>
 </p>
