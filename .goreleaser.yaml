@@ -60,25 +60,25 @@ changelog:
 
 release:
   github:
-    owner: zmunro  # TODO: Replace with your GitHub username
+    owner: zmunro
     name: outputbuddy
   prerelease: auto
   header: |
     ## outputbuddy v{{ .Version }}
-    
+
     ### Installation
-    
+
     #### Using Homebrew
     ```bash
     brew tap zmunro/outputbuddy
     brew install outputbuddy
     ```
-    
+
     #### Using go install
     ```bash
     go install github.com/zmunro/outputbuddy@v{{ .Version }}
     ```
-    
+
     #### Direct Download
     Download the appropriate binary for your platform from the assets below.
 
