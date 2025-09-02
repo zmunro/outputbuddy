@@ -2,6 +2,8 @@
 outputbuddy
 outputbuddy-*
 *.exe
+test-build
+test-build.exe
 
 # Go build artifacts
 *.o
