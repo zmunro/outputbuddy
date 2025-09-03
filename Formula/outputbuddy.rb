@@ -2,10 +2,10 @@
 class Outputbuddy < Formula
   desc "Flexible output redirection with color preservation"
   homepage "https://github.com/zmunro/outputbuddy"
-  version "2.0.4"
+  version "2.1.0"
 
   url "https://github.com/zmunro/outputbuddy/archive/refs/tags/v#{version}.tar.gz"
-  sha256 "3736f484e1fe9bec29cfaa2a1d2d84a7bfac0f27e57923c2bbf88ecba070baca"
+  sha256 "5caa4c051bd1b2eb43b45a05cf42136d6dfc6aa73f6f5f79629c467d9e8d1dfc"
 
   license "MIT"
 
