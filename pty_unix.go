@@ -4,7 +4,6 @@
 package main
 
 import (
-	"bufio"
 	"io"
 	"os"
 	"os/exec"
@@ -33,13 +32,17 @@ func runWithPty(router *OutputRouter, commandArgs []string) error {
 
 	go io.Copy(ptmx, os.Stdin)
 
-	scanner := bufio.NewScanner(ptmx)
-	scanner.Buffer(make([]byte, 1024*1024), 1024*1024)
-	scanner.Split(scanLinesOrProgress)
-
-	for scanner.Scan() {
-		data := scanner.Bytes()
-		router.WriteStdout(append(data, '\n'))
+	// Read PTY output in chunks and pass directly to router
+	// This preserves carriage returns and allows progress bars to work correctly
+	buf := make([]byte, 32*1024)
+	for {
+		n, err := ptmx.Read(buf)
+		if n > 0 {
+			router.WriteStdout(buf[:n])
+		}
+		if err != nil {
+			break
+		}
 	}
 
 	return cmd.Wait()

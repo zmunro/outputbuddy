@@ -22,6 +22,7 @@ type FileWriter struct {
 	stripAnsi bool
 	buffer    bytes.Buffer
 	lastLine  string
+	currentLine bytes.Buffer  // Accumulates the current line being built
 }
 
 func NewFileWriter(path string, stripAnsi bool) (*FileWriter, error) {
@@ -36,41 +37,103 @@ func NewFileWriter(path string, stripAnsi bool) (*FileWriter, error) {
 }
 
 func (fw *FileWriter) Write(p []byte) (n int, err error) {
+	// Debug: log data received
+	// fmt.Fprintf(os.Stderr, "[FW] Write %d bytes: %q\n", len(p), string(p))
+
 	if !fw.stripAnsi {
-		return fw.file.Write(p)
+		// For raw output, we still need to handle carriage returns
+		// to avoid duplicate progress bar lines
+		fw.buffer.Write(p)
+		return len(p), fw.processBuffer(false)
 	}
 
 	fw.buffer.Write(p)
+	return len(p), fw.processBuffer(true)
+}
 
-	for {
-		line, err := fw.buffer.ReadBytes('\n')
-		if err != nil {
-			if len(line) > 0 {
-				fw.buffer.Write(line)
-			}
+func (fw *FileWriter) processBuffer(stripAnsi bool) error {
+	for fw.buffer.Len() > 0 {
+		b := fw.buffer.Bytes()
+
+		// Find the next line ending or carriage return
+		newlineIdx := bytes.IndexByte(b, '\n')
+		crIdx := bytes.IndexByte(b, '\r')
+
+		if newlineIdx == -1 && crIdx == -1 {
+			// No line ending found, accumulate in currentLine
+			fw.currentLine.Write(b)
+			fw.buffer.Reset()
 			break
 		}
 
-		cleaned := fw.cleanLine(line)
+		// Determine which comes first
+		idx := newlineIdx
+		isCR := false
+		if crIdx != -1 && (newlineIdx == -1 || crIdx < newlineIdx) {
+			idx = crIdx
+			isCR = true
+		}
 
-		trimmed := bytes.TrimSpace(cleaned)
-		if len(trimmed) == 0 {
+		// Add everything up to the line ending to currentLine
+		fw.currentLine.Write(b[:idx])
+
+		if isCR {
+			// Carriage return: check if it's followed by newline (CRLF)
+			fw.buffer.Next(idx + 1)
+			remaining := fw.buffer.Bytes()
+			if len(remaining) > 0 && remaining[0] == '\n' {
+				// CRLF sequence - treat as newline
+				fw.buffer.Next(1) // consume the \n
+				line := fw.currentLine.Bytes()
+				fw.currentLine.Reset()
+
+				if stripAnsi {
+					line = fw.cleanLine(line)
+					trimmed := bytes.TrimSpace(line)
+					if len(trimmed) == 0 {
+						continue
+					}
+
+					if fw.isProgressLine(line) {
+						fw.lastLine = string(line)
+						continue
+					}
+				}
+
+				fw.file.Write(line)
+				fw.file.Write([]byte("\n"))
+				fw.lastLine = string(line)
+			} else {
+				// Standalone CR - reset current line (for progress bars)
+				fw.currentLine.Reset()
+			}
 			continue
 		}
 
-		if fw.isProgressLine(cleaned) {
-			fw.lastLine = string(cleaned)
-			continue
+		// Newline: write the accumulated line to file
+		line := fw.currentLine.Bytes()
+		fw.currentLine.Reset()
+		fw.buffer.Next(idx + 1)
+
+		if stripAnsi {
+			line = fw.cleanLine(line)
+			trimmed := bytes.TrimSpace(line)
+			if len(trimmed) == 0 {
+				continue
+			}
+
+			if fw.isProgressLine(line) {
+				fw.lastLine = string(line)
+				continue
+			}
 		}
 
-		fw.file.Write(cleaned)
-		if !bytes.HasSuffix(cleaned, []byte("\n")) {
-			fw.file.Write([]byte("\n"))
-		}
-		fw.lastLine = string(cleaned)
+		fw.file.Write(line)
+		fw.file.Write([]byte("\n"))
+		fw.lastLine = string(line)
 	}
 
-	return len(p), nil
+	return nil
 }
 
 func (fw *FileWriter) cleanLine(line []byte) []byte {
@@ -105,16 +168,28 @@ func (fw *FileWriter) isProgressLine(line []byte) bool {
 }
 
 func (fw *FileWriter) Flush() error {
-	if fw.buffer.Len() > 0 {
-		remaining := fw.buffer.Bytes()
-		cleaned := fw.cleanLine(remaining)
-		if len(cleaned) > 0 {
-			fw.file.Write(cleaned)
-			if !bytes.HasSuffix(cleaned, []byte("\n")) {
+	// fmt.Fprintf(os.Stderr, "[FW] Flush called, buffer=%d bytes, currentLine=%d bytes\n", fw.buffer.Len(), fw.currentLine.Len())
+	// Process any remaining buffered data
+	fw.processBuffer(fw.stripAnsi)
+
+	// Write any incomplete line
+	if fw.currentLine.Len() > 0 {
+		line := fw.currentLine.Bytes()
+		if fw.stripAnsi {
+			line = fw.cleanLine(line)
+			// After cleaning, check if there's still content
+			if len(bytes.TrimSpace(line)) > 0 {
+				fw.file.Write(line)
 				fw.file.Write([]byte("\n"))
 			}
+		} else {
+			// For non-stripped output, write as-is
+			fw.file.Write(line)
+			fw.file.Write([]byte("\n"))
 		}
+		fw.currentLine.Reset()
 	}
+
 	return fw.file.Sync()
 }
 
@@ -225,6 +300,24 @@ func utf8DecodeRune(p []byte) (rune, int) {
 	return rune(b0&0x07)<<18 | rune(p[1]&0x3F)<<12 | rune(p[2]&0x3F)<<6 | rune(p[3]&0x3F), 4
 }
 
+// TerminalWriter wraps terminal output to handle progress bars correctly
+type TerminalWriter struct {
+	output io.Writer
+	isStderr bool
+}
+
+func NewTerminalWriter(output io.Writer, isStderr bool) *TerminalWriter {
+	return &TerminalWriter{
+		output: output,
+		isStderr: isStderr,
+	}
+}
+
+func (tw *TerminalWriter) Write(p []byte) (n int, err error) {
+	// Write directly to terminal, preserving carriage returns for proper progress bar behavior
+	return tw.output.Write(p)
+}
+
 // OutputRouter manages routing output to multiple destinations
 type OutputRouter struct {
 	stdoutWriters []io.Writer
@@ -269,11 +362,11 @@ func (or *OutputRouter) AddCombinedFile(path string, stripAnsi bool) error {
 }
 
 func (or *OutputRouter) AddStdoutTerminal() {
-	or.stdoutWriters = append(or.stdoutWriters, os.Stdout)
+	or.stdoutWriters = append(or.stdoutWriters, NewTerminalWriter(os.Stdout, false))
 }
 
 func (or *OutputRouter) AddStderrTerminal() {
-	or.stderrWriters = append(or.stderrWriters, os.Stderr)
+	or.stderrWriters = append(or.stderrWriters, NewTerminalWriter(os.Stderr, true))
 }
 
 func (or *OutputRouter) WriteStdout(data []byte) {

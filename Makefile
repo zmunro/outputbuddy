@@ -1,6 +1,6 @@
 PREFIX ?= /usr/local
 BINDIR = $(PREFIX)/bin
-VERSION = 2.0.0
+VERSION = 2.1.0
 
 # Build flags for smaller binary
 LDFLAGS = -ldflags="-s -w -X main.VERSION=$(VERSION)"
@@ -19,7 +19,7 @@ deps:
 
 build: deps
 	@echo "Building outputbuddy..."
-	go build $(LDFLAGS) -o outputbuddy outputbuddy.go
+	go build $(LDFLAGS) -o outputbuddy .
 	@echo "Build complete!"
 
 install: build
@@ -52,12 +52,12 @@ test: build
 build-all: build-linux build-macos build-windows
 
 build-linux: deps
-	GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o outputbuddy-linux-amd64 outputbuddy.go
-	GOOS=linux GOARCH=arm64 go build $(LDFLAGS) -o outputbuddy-linux-arm64 outputbuddy.go
+	GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o outputbuddy-linux-amd64 .
+	GOOS=linux GOARCH=arm64 go build $(LDFLAGS) -o outputbuddy-linux-arm64 .
 
 build-macos: deps
-	GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) -o outputbuddy-darwin-amd64 outputbuddy.go
-	GOOS=darwin GOARCH=arm64 go build $(LDFLAGS) -o outputbuddy-darwin-arm64 outputbuddy.go
+	GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) -o outputbuddy-darwin-amd64 .
+	GOOS=darwin GOARCH=arm64 go build $(LDFLAGS) -o outputbuddy-darwin-arm64 .
 
 build-windows: deps
-	GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o outputbuddy-windows-amd64.exe outputbuddy.go
+	GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o outputbuddy-windows-amd64.exe .
