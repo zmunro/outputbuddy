@@ -72,6 +72,8 @@ When no options are provided, outputbuddy automatically:
 
 This makes it perfect for quick debugging sessions where you want to see and log everything.
 
+**Note:** The `buddy.log` file is ONLY created when you don't specify any routing options. As soon as you provide any routing argument (even just `1` or `2` for terminal output), outputbuddy switches to explicit routing mode and won't create `buddy.log`.
+
 ### Options
 
 | Option | Description |
@@ -120,6 +122,27 @@ ob --keep-ansi -- npm test  # logs to buddy.log with colors preserved
 ```bash
 # Log everything but show nothing on terminal
 ob 2+1=silent.log -- ./batch-process.sh
+
+# Discard output entirely
+ob 2+1=/dev/null -- ./batch-process.sh
+```
+
+#### 🚫 Preventing Default buddy.log
+```bash
+# IMPORTANT: buddy.log is ONLY created when NO routing options are provided
+# These commands will NOT create buddy.log:
+
+# Show only on terminal (no files created)
+ob 2+1 -- ./my-script.sh
+
+# Use custom log file instead of buddy.log
+ob 2+1=custom.log -- ./my-script.sh
+
+# Separate files (no buddy.log)
+ob 1=out.log 2=err.log -- make
+
+# Even just specifying terminal output prevents buddy.log
+ob 1 -- ./script.sh  # Only stdout to terminal, no files
 ```
 
 #### ⚡ Development Workflow
