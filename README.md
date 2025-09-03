@@ -29,7 +29,7 @@ go install github.com/zmunro/outputbuddy@latest
 ### Using Homebrew (macOS/Linux)
 
 ```bash
-brew tap zmunro/outputbuddy
+brew tap zmunro/outputbuddy https://github.com/zmunro/outputbuddy
 brew install outputbuddy
 ```
 

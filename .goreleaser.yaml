@@ -70,7 +70,7 @@ release:
 
     #### Using Homebrew
     ```bash
-    brew tap zmunro/outputbuddy
+    brew tap zmunro/outputbuddy https://github.com/zmunro/outputbuddy
     brew install outputbuddy
     ```
 
