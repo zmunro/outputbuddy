@@ -2,7 +2,7 @@
 
 [![Go Version](https://img.shields.io/badge/Go-1.18+-00ADD8?style=for-the-badge&logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)](LICENSE)
-[![Version](https://img.shields.io/badge/version-2.0.0-green?style=for-the-badge)](https://github.com/zmunro/outputbuddy/releases)
+[![Version](https://img.shields.io/badge/version-2.1.0-green?style=for-the-badge)](https://github.com/zmunro/outputbuddy/releases)
 
 > **Flexible output redirection with color preservation** - Never lose your terminal colors when logging to files again!
 
@@ -13,6 +13,7 @@ outputbuddy (or `ob` for short) is a powerful command-line tool that lets you re
 - 🎨 **Preserves Colors**: Maintains ANSI color codes when redirecting to terminals
 - 📝 **Smart ANSI Stripping**: Automatically removes ANSI codes from file outputs (configurable)
 - 🔀 **Multiple Destinations**: Route stdout/stderr to any combination of files and terminal
+- 🚀 **Smart Defaults**: Automatically logs to `buddy.log` when no options specified
 - 🔄 **PTY Support**: Full pseudo-terminal support for interactive applications
 - 🧹 **Progress Bar Filtering**: Intelligently filters out progress bars and spinners from logs
 - ⚡ **High Performance**: Efficient buffering and parallel processing
@@ -40,10 +41,13 @@ Download the latest release from the [releases page](https://github.com/zmunro/o
 ## 🚀 Quick Start
 
 ```bash
-# Redirect both stdout and stderr to a file AND show on terminal
-outputbuddy 2+1=output.log 2+1 -- python script.py
+# Default behavior: logs to buddy.log AND shows on terminal
+outputbuddy -- python script.py
 
 # Or use the short alias
+ob -- python script.py
+
+# Custom logging: redirect both to a specific file AND show on terminal
 ob 2+1=output.log 2+1 -- python script.py
 
 # Separate stdout and stderr to different files
@@ -58,6 +62,15 @@ ob 2=errors.log 2 -- ./my-program
 ```
 outputbuddy [options] -- command [args...]
 ```
+
+### Default Behavior
+
+When no options are provided, outputbuddy automatically:
+- Redirects both stdout and stderr to `buddy.log`
+- Shows both stdout and stderr on the terminal
+- Strips ANSI codes from the log file
+
+This makes it perfect for quick debugging sessions where you want to see and log everything.
 
 ### Options
 
@@ -75,9 +88,16 @@ outputbuddy [options] -- command [args...]
 
 ### Examples
 
+#### 🚀 Default Behavior
+```bash
+# Quick logging with default settings (logs to buddy.log)
+ob -- npm test
+ob -- python manage.py runserver
+```
+
 #### 🎯 Basic Logging
 ```bash
-# Log everything to a file while watching output
+# Log everything to a custom file while watching output
 ob 2+1=build.log 2+1 -- cargo build --release
 ```
 
@@ -91,6 +111,9 @@ ob 1=output.log 2=debug.log 1 2 -- node app.js
 ```bash
 # Keep ANSI codes for later viewing with 'less -R'
 ob --keep-ansi 2+1=colored.log -- npm test
+
+# Default behavior with ANSI preservation
+ob --keep-ansi -- npm test  # logs to buddy.log with colors preserved
 ```
 
 #### 🤫 Silent Logging
@@ -180,6 +203,15 @@ Add to your shell configuration:
 alias ob='outputbuddy'
 ```
 
+### Default Log File
+The default `buddy.log` file is created in the current directory when no routing options are specified:
+```bash
+# Quick debugging session
+ob -- ./my-script.sh
+# Check the log afterwards
+cat buddy.log
+```
+
 ### Viewing Colored Logs
 If you used `--keep-ansi`, view colored logs with:
 ```bash
@@ -192,6 +224,9 @@ cat colored.log  # if your terminal supports it
 Perfect for CI/CD pipelines where you need both real-time output and complete logs:
 ```bash
 ob 2+1=ci-build.log 2+1 -- make test
+
+# Or use default logging for quick CI runs
+ob -- make test  # automatically logs to buddy.log
 ```
 
 ---

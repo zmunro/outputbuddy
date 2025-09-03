@@ -14,7 +14,7 @@ import (
 	"golang.org/x/term"
 )
 
-var VERSION = "2.0.0"
+var VERSION = "2.1.0"
 
 // FileWriter handles writing to a file with optional ANSI stripping
 type FileWriter struct {
@@ -325,8 +325,10 @@ func parseArgs(args []string) (*OutputRouter, []string, bool, error) {
 		return nil, nil, false, fmt.Errorf("no command specified after --")
 	}
 
-	fileMap := make(map[string]bool)
+		fileMap := make(map[string]bool)
 
+	// First pass: check for flags
+	filteredArgs := []string{}
 	for _, arg := range routerArgs {
 		if arg == "--no-pty" {
 			usePty = false
@@ -336,6 +338,26 @@ func parseArgs(args []string) (*OutputRouter, []string, bool, error) {
 			stripAnsi = false
 			continue
 		}
+		filteredArgs = append(filteredArgs, arg)
+	}
+
+	// Default behavior: if no routing args provided (after filtering flags), redirect both to buddy.log and terminal
+	if len(filteredArgs) == 0 {
+		// Add buddy.log as combined output file
+		if err := router.AddCombinedFile("buddy.log", stripAnsi); err != nil {
+			return nil, nil, false, err
+		}
+		fileMap["buddy.log"] = true
+
+		// Also show on terminal
+		router.AddStdoutTerminal()
+		router.AddStderrTerminal()
+
+		return router, commandArgs, usePty, nil
+	}
+
+	// Process routing arguments
+	for _, arg := range filteredArgs {
 
 		arg = strings.ReplaceAll(arg, "2+1", "stderr+stdout")
 		arg = strings.ReplaceAll(arg, "1+2", "stdout+stderr")
@@ -456,6 +478,9 @@ func printUsage() {
 
 Usage: outputbuddy [options] -- command [args...]
 
+Default behavior (no options):
+  Redirects both stdout and stderr to buddy.log AND displays on terminal
+
 Options:
   2=file.log or stderr=file.log          - redirect stderr to file
   1=file.log or stdout=file.log          - redirect stdout to file
@@ -468,6 +493,7 @@ Options:
   --version, -v                          - show version
 
 Examples:
+  ob -- python script.py                 - logs to buddy.log + terminal (default)
   ob 2+1=output.log 2+1 -- python script.py
   ob 2=err.log 1=out.log -- make
   ob 2=err.log 2 -- ./program
