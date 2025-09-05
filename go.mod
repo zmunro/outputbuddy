@@ -1,6 +1,6 @@
-module outputbuddy
+module github.com/zmunro/outputbuddy
 
-go 1.25.0
+go 1.18
 
 require (
 	github.com/creack/pty v1.1.24
